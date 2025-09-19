@@ -1,776 +1,292 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>VariedadesExpress - Catálogo</title>
-<style>
-  :root{--bg:#f6f7fb;--card:#fff;--accent:#16a34a;--muted:#6b7280;--yellow:#fef3c7;}
-  body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:#111}
-  .container{max-width:1200px;margin:24px auto;padding:16px}
-  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-  h1{font-size:24px;margin:0}
-  .panel{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 6px 20px rgba(16,24,40,0.06)}
-  .grid{display:grid;gap:12px}
-  .grid.cols-3{grid-template-columns:1fr 380px 320px}
-  label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
-  input[type=text], input[type=number], textarea, select{width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px}
-  textarea{min-height:60px}
-  .small{font-size:13px;color:var(--muted)}
-  button{cursor:pointer}
-  .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none}
-  .btn.sec{background:#e5e7eb;color:#111}
-  .product{display:flex;gap:12px;padding:12px;border-radius:10px;background:var(--card);align-items:center}
-  .thumb{width:110px;height:110px;background:#f3f4f6;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
-  .thumb img.zoom:hover{transform:scale(1.2)}
-  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .tag{background:var(--yellow);padding:4px 8px;border-radius:999px;font-size:12px}
-  .muted{color:var(--muted)}
-  .controls{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .flex{display:flex;gap:8px;align-items:center}
-  .favorites{font-size:18px}
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60}
-  .modal{width:100%;max-width:760px;background:var(--card);padding:16px;border-radius:10px}
-  .grid-2{display:grid;grid-template-columns:1fr 260px;gap:12px}
-  .preview-list{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-  .preview-list img{width:60px;height:60px;object-fit:cover;border-radius:6px}
-  .toast{position:fixed;left:16px;bottom:16px;background:#ecfdf5;border-left:6px solid #16a34a;padding:12px 14px;border-radius:8px;z-index:70}
-  .badge{font-size:12px;padding:6px 8px;background:#fef3c7;border-radius:8px}
-  .product-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-  .faq-item{border-top:1px dashed #e5e7eb;padding:8px 0}
-  .reviews .rev{border-bottom:1px solid #f3f4f6;padding:8px 0}
-  .counter-global{font-weight:600}
-  .small-muted{font-size:12px;color:var(--muted)}
-  /* responsive */
-  @media(max-width:920px){ .grid.cols-3{grid-template-columns:1fr} .grid-2{grid-template-columns:1fr} }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VariedadesExpress - Catálogo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+    }
+    header {
+      background: #222;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+    }
+    .catalogo {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .producto {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .producto img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .producto h3 {
+      margin: 0.5rem 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #28a745;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 0.5rem;
+    }
+    .btn:hover {
+      background: #218838;
+    }
+    .favorito {
+      cursor: pointer;
+      color: red;
+      font-size: 20px;
+    }
+    #pedido-form {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    #pedido-form form {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+    }
+    #pedido-form label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+    }
+    #pedido-form input, #pedido-form select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #mensaje-confirmacion {
+      display: none;
+      text-align: center;
+      padding: 1rem;
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      border-radius: 5px;
+      margin: 1rem;
+    }
+    .filtros {
+      padding: 1rem;
+      background: #fff;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .filtros select, .filtros input {
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
   <header>
     <h1>VariedadesExpress - Catálogo</h1>
-    <div style="text-align:right">
-      <div class="small-muted">📦 Más de <span id="global-orders">0</span> pedidos realizados en total en VariedadesExpress.</div>
-      <div class="small-muted" id="nowtime"></div>
-    </div>
+    <p>📦 Más de <span id="contador-global">0</span> pedidos realizados en total en VariedadesExpress.</p>
   </header>
 
-  <div class="grid cols-3">
-    <!-- LEFT: Upload + filters + FAQs -->
-    <div class="panel">
-      <h3>Panel de subida (manual)</h3>
-      <form id="product-form">
-        <div style="margin-top:8px">
-          <label>Referencia *</label>
-          <input id="p-reference" type="text" required />
-        </div>
-        <div style="margin-top:8px">
-          <label>Nombre *</label>
-          <input id="p-name" type="text" required />
-        </div>
-        <div style="margin-top:8px">
-          <label>Descripción</label>
-          <textarea id="p-desc"></textarea>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="flex:1">
-            <label>Precio *</label>
-            <input id="p-price" type="number" required />
-          </div>
-          <div style="width:120px">
-            <label>Activo</label>
-            <select id="p-active">
-              <option value="1">Sí</option>
-              <option value="0">No</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:8px">
-          <label>Tallas (separadas por coma) *</label>
-          <input id="p-sizes" type="text" placeholder="38,39,40" />
-        </div>
-        <div style="margin-top:8px">
-          <label>Colores (coma)</label>
-          <input id="p-colors" type="text" placeholder="blanco,negro,azul" />
-        </div>
-
-        <div style="margin-top:8px">
-          <label>Stock por talla|color (ej: 38|blanco:3,39|negro:2)</label>
-          <input id="p-stock" type="text" placeholder="38|blanco:3,38|negro:2" />
-          <div class="small-muted" style="margin-top:6px">Formato clave: <code>talla|color:cantidad</code></div>
-        </div>
-
-        <div style="margin-top:8px">
-          <label>Tags (coma) — ej: Nuevo,Oferta,Últimas unidades</label>
-          <input id="p-tags" type="text" />
-        </div>
-
-        <div style="margin-top:8px">
-          <label>Fotos (múltiples)</label>
-          <input id="p-images" type="file" accept="image/*" multiple />
-          <div class="preview-list" id="preview-images"></div>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn" type="submit">Agregar producto</button>
-          <button class="btn sec" type="button" id="clear-form">Limpiar</button>
-        </div>
-      </form>
-
-      <hr style="margin:12px 0">
-
-      <h4>Filtros</h4>
-      <div style="margin-top:8px">
-        <label>Buscar (nombre o referencia)</label>
-        <input id="filter-search" type="text" placeholder="Buscar..." />
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <input id="filter-size" type="text" placeholder="Talla" />
-        <input id="filter-color" type="text" placeholder="Color" />
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <input id="filter-min" type="number" placeholder="Min" />
-        <input id="filter-max" type="number" placeholder="Max" />
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-        <input id="filter-available" type="checkbox" />
-        <label class="small">Sólo disponibles</label>
-      </div>
-      <div style="margin-top:8px">
-        <label>Tag</label>
-        <select id="filter-tag">
-          <option value="">-- Todos --</option>
-          <option>Nuevo</option>
-          <option>Oferta</option>
-          <option>Últimas unidades</option>
-        </select>
-      </div>
-
-      <hr style="margin:12px 0">
-
-      <h4>FAQs</h4>
-      <div class="faq-item">
-        <strong>¿Qué métodos de pago aceptan?</strong>
-        <div class="small-muted">Efectivo contra entrega, transferencia y enlace de pago.</div>
-      </div>
-      <div class="faq-item">
-        <strong>¿Cuánto tardan las entregas?</strong>
-        <div class="small-muted">1-5 días hábiles según ciudad.</div>
-      </div>
-      <div class="faq-item">
-        <strong>¿Garantía?</strong>
-        <div class="small-muted">15 días por defectos de fábrica (ver protocolo).</div>
-      </div>
-    </div>
-
-    <!-- CENTER: Product list -->
-    <div>
-      <div class="panel" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h3 style="margin:0">Productos</h3>
-          <div class="small-muted" id="results-count">0 resultados</div>
-        </div>
-        <div style="text-align:right">
-          <div class="small-muted">Timer oferta: <span id="countdown">--</span></div>
-        </div>
-      </div>
-
-      <div id="product-list" class="product-list"></div>
-
-      <div style="margin-top:12px">
-        <h4>Favoritos</h4>
-        <div id="favorites-list" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px"></div>
-      </div>
-
-      <div style="margin-top:12px" class="panel">
-        <h4>Reseñas</h4>
-        <div class="reviews" id="reviews">
-          <!-- reviews -->
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT: Summary - counts, quick reviews -->
-    <aside>
-      <div class="panel" style="margin-bottom:12px">
-        <h4>Contadores</h4>
-        <div style="margin-top:8px">📦 Global: <span id="global-count-display">0</span></div>
-        <div style="margin-top:6px" class="small-muted">Se actualiza automáticamente con cada pedido.</div>
-      </div>
-
-      <div class="panel" style="margin-bottom:12px">
-        <h4>Últimas reseñas</h4>
-        <div id="recent-reviews"></div>
-      </div>
-
-      <div class="panel">
-        <h4>Preguntas</h4>
-        <div class="small-muted">Contacto: WhatsApp +57 321 673 2606</div>
-      </div>
-    </aside>
+  <div class="filtros">
+    <select id="filtro-talla">
+      <option value="">Filtrar por talla</option>
+    </select>
+    <select id="filtro-color">
+      <option value="">Filtrar por color</option>
+    </select>
+    <input type="number" id="filtro-precio" placeholder="Precio máximo">
   </div>
-</div>
 
-<!-- Modals -->
-<div id="modal-root"></div>
+  <div id="mensaje-confirmacion">✅ Tu pedido fue enviado a VariedadesExpress, pronto nos comunicaremos contigo. Gracias por preferirnos.</div>
 
-<!-- Toast confirmation -->
-<div id="toast" class="toast" style="display:none">✅ Tu pedido fue enviado a VariedadesExpress, pronto nos comunicaremos contigo. Gracias por preferirnos.</div>
+  <section class="catalogo" id="catalogo">
+    <!-- Productos generados dinámicamente -->
+  </section>
 
-<script>
-/*
-  VariedadesExpress - Single-file HTML/JS implementation
-  Persistencia: localStorage
-  WhatsApp number: +573216732606
-*/
+  <!-- Formulario Pedido -->
+  <div id="pedido-form">
+    <form id="formulario">
+      <h2>📦 Pedido VariedadesExpress</h2>
+      <label>🔖 Referencia</label>
+      <input type="text" id="ref" readonly>
+      <label>👤 Nombre completo</label>
+      <input type="text" id="nombre" required>
+      <label>📍 Dirección</label>
+      <input type="text" id="direccion" required>
+      <label>🏘️ Barrio</label>
+      <input type="text" id="barrio" required>
+      <label>🏙️ Ciudad y departamento</label>
+      <input type="text" id="ciudad" required>
+      <label>📞 Teléfono</label>
+      <input type="text" id="telefono" required>
+      <label>📞 Teléfono adicional</label>
+      <input type="text" id="telefono2">
+      <label>👟 Talla</label>
+      <select id="talla" required></select>
+      <label>🎨 Color</label>
+      <select id="color" required></select>
+      <label>🚚 Método de entrega</label>
+      <select id="metodo">
+        <option value="Domicilio">A domicilio</option>
+        <option value="Oficina">Reclamo en oficina</option>
+      </select>
+      <button type="submit" class="btn">Enviar pedido</button>
+      <button type="button" class="btn" style="background:#dc3545" onclick="cerrarFormulario()">Cancelar</button>
+    </form>
+  </div>
 
-// ---------- Utilities ----------
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  <script>
+    const productos = [
+      {
+        ref: '101',
+        nombre: 'Tenis Adidas',
+        descripcion: 'Tenis deportivos originales',
+        precio: 199900,
+        stock: 10,
+        tallas: ['37','38','39','40'],
+        colores: ['Blanco','Negro'],
+        fotos: ['https://via.placeholder.com/250'],
+        pedidos: 0
+      },
+      {
+        ref: '102',
+        nombre: 'Tenis Nike',
+        descripcion: 'Tenis casuales modernos',
+        precio: 179900,
+        stock: 5,
+        tallas: ['38','39','41'],
+        colores: ['Rojo','Azul'],
+        fotos: ['https://via.placeholder.com/250'],
+        pedidos: 0
+      }
+    ];
 
-function nowStr(){ return new Date().toLocaleString(); }
+    const catalogo = document.getElementById('catalogo');
+    const contadorGlobal = document.getElementById('contador-global');
+    let totalPedidos = 0;
 
-// ---------- Local Storage keys ----------
-const LS_PRODUCTS = 've_products_html';
-const LS_FAVS = 've_favorites_html';
-const LS_GLOBAL = 've_orders_global_html';
-const LS_REVIEWS = 've_reviews_html';
+    const filtroTalla = document.getElementById('filtro-talla');
+    const filtroColor = document.getElementById('filtro-color');
+    const filtroPrecio = document.getElementById('filtro-precio');
 
-// ---------- App state ----------
-let products = JSON.parse(localStorage.getItem(LS_PRODUCTS) || '[]'); // array of product objects
-let favorites = JSON.parse(localStorage.getItem(LS_FAVS) || '[]'); // array product ids
-let globalOrders = Number(localStorage.getItem(LS_GLOBAL) || 0);
-let reviews = JSON.parse(localStorage.getItem(LS_REVIEWS) || '[]');
-
-if(!Array.isArray(products)) products = [];
-if(!Array.isArray(favorites)) favorites = [];
-if(!Array.isArray(reviews)) reviews = [
-  {id: uid(), name:'Laura', stars:5, comment:'Excelente atención y producto tal cual la foto.'},
-  {id: uid(), name:'Javier', stars:4, comment:'Entrega rápida, el talle quedó perfecto.'}
-];
-
-// ---------- DOM elements ----------
-const productListEl = $('#product-list');
-const resultsCountEl = $('#results-count');
-const globalOrdersEl = $('#global-orders');
-const globalCountDisplayEl = $('#global-count-display');
-const filterSearchEl = $('#filter-search');
-const filterSizeEl = $('#filter-size');
-const filterColorEl = $('#filter-color');
-const filterMinEl = $('#filter-min');
-const filterMaxEl = $('#filter-max');
-const filterAvailableEl = $('#filter-available');
-const filterTagEl = $('#filter-tag');
-const previewImagesEl = $('#preview-images');
-const pImagesInput = $('#p-images');
-const toastEl = $('#toast');
-const nowtimeEl = $('#nowtime');
-const countdownEl = $('#countdown');
-const favoritesListEl = $('#favorites-list');
-const reviewsEl = $('#reviews');
-const recentReviewsEl = $('#recent-reviews');
-
-// countdown endpoint (24h from load example)
-let countdownEnd = Date.now() + 1000*60*60*24; // 24h
-
-// ---------- Helpers ----------
-function saveAll(){
-  localStorage.setItem(LS_PRODUCTS, JSON.stringify(products));
-  localStorage.setItem(LS_FAVS, JSON.stringify(favorites));
-  localStorage.setItem(LS_GLOBAL, String(globalOrders));
-  localStorage.setItem(LS_REVIEWS, JSON.stringify(reviews));
-}
-
-function formatMoney(v){ return Number(v).toLocaleString('es-CO'); }
-
-function parseStockInput(str){
-  // "38|blanco:3,39|negro:2" => { "38|blanco":3, ... }
-  const obj = {};
-  (str||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(part=>{
-    const [k, val] = part.split(':').map(x=>x && x.trim());
-    if(!k) return;
-    obj[k] = Number(val || 0);
-  });
-  return obj;
-}
-
-function variantAvailable(product, size, color){
-  const key = `${size}|${color}`;
-  return (product.stock && (product.stock[key] || 0) > 0);
-}
-
-function productAvailable(product){
-  if(!product.sizes || !product.colors) return false;
-  for(const s of product.sizes){
-    for(const c of product.colors){
-      if(variantAvailable(product,s,c)) return true;
-    }
-  }
-  return false;
-}
-
-// ---------- Rendering ----------
-function renderProducts(){
-  const list = filteredProducts();
-  productListEl.innerHTML = '';
-  resultsCountEl.textContent = `${list.length} resultados`;
-
-  for(const p of list){
-    const el = document.createElement('div');
-    el.className = 'product';
-    const img = p.images && p.images[0] ? `<img src="${p.images[0]}" class="zoom" alt="">` : '<div class="small-muted">Sin imagen</div>';
-    el.innerHTML = `
-      <div class="thumb">${img}</div>
-      <div style="flex:1">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <div class="small-muted">Ref: ${p.reference}</div>
-            <div style="font-weight:600">${p.name}</div>
-            <div style="font-weight:700;color:#111">$ ${formatMoney(p.price)}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="small-muted">${p.sizes.length} tallas • ${p.colors.length} colores</div>
-            <div style="margin-top:6px">${(p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-          </div>
-        </div>
-        <div class="small-muted" style="margin-top:8px;min-height:36px">${p.description || ''}</div>
-
-        <div class="controls">
-          <button class="btn" data-action="order" data-id="${p.id}">Hacer pedido por WhatsApp</button>
-          <button class="btn sec" data-action="view" data-id="${p.id}">Ver detalles</button>
-          <div style="margin-left:auto" class="flex">
-            <button data-action="fav" data-id="${p.id}" class="favorites">${favorites.includes(p.id)?'💖':'🤍'}</button>
-          </div>
-        </div>
-
-        <div style="margin-top:8px" class="small-muted">
-          ${p.timesOrdered||0} veces pedido • <strong>🔥 ${p.timesOrdered||0} personas ya pidieron este producto en VariedadesExpress.</strong>
-        </div>
-
-        <div style="margin-top:8px">
-          <button data-action="toggle" data-id="${p.id}" class="btn sec">${p.active? 'Desactivar' : 'Activar'}</button>
-        </div>
-      </div>
-    `;
-    productListEl.appendChild(el);
-  }
-
-  renderFavorites();
-  renderReviews();
-  updateGlobalDisplays();
-}
-
-function renderFavorites(){
-  favoritesListEl.innerHTML = '';
-  for(const fid of favorites){
-    const p = products.find(x => x.id === fid);
-    if(!p) continue;
-    const d = document.createElement('div');
-    d.className = 'panel';
-    d.innerHTML = `<div style="display:flex;gap:8px;align-items:center">
-      <div style="width:52px;height:52px;overflow:hidden;border-radius:8px"><img src="${p.images[0]||''}" style="width:100%;height:100%;object-fit:cover" /></div>
-      <div style="flex:1">
-        <div style="font-weight:600">${p.name}</div>
-        <div class="small-muted">Ref ${p.reference}</div>
-      </div>
-      <div>
-        <button data-action="fav" data-id="${p.id}" class="btn sec">Quitar</button>
-      </div>
-    </div>`;
-    favoritesListEl.appendChild(d);
-  }
-}
-
-function renderReviews(){
-  reviewsEl.innerHTML = '';
-  recentReviewsEl.innerHTML = '';
-  for(const r of reviews){
-    const el = document.createElement('div');
-    el.className = 'rev';
-    el.innerHTML = `<div style="display:flex;justify-content:space-between"><strong>${r.name}</strong><div>${'★'.repeat(r.stars)}</div></div><div class="small-muted">${r.comment}</div>`;
-    reviewsEl.appendChild(el);
-
-    const el2 = document.createElement('div');
-    el2.className = 'small-muted';
-    el2.textContent = `${r.name}: ${r.comment}`;
-    recentReviewsEl.appendChild(el2);
-  }
-}
-
-function updateGlobalDisplays(){
-  globalOrdersEl.textContent = globalOrders;
-  globalCountDisplayEl.textContent = globalOrders;
-}
-
-// ---------- Filters ----------
-function filteredProducts(){
-  const q = (filterSearchEl.value||'').toLowerCase().trim();
-  const fsize = (filterSizeEl.value||'').trim();
-  const fcolor = (filterColorEl.value||'').trim();
-  const min = filterMinEl.value ? Number(filterMinEl.value) : null;
-  const max = filterMaxEl.value ? Number(filterMaxEl.value) : null;
-  const onlyAvail = filterAvailableEl.checked;
-  const ftag = filterTagEl.value;
-
-  return products.filter(p=>{
-    if(!p.active) return false;
-    if(q && !(p.name.toLowerCase().includes(q) || p.reference.toLowerCase().includes(q))) return false;
-    if(fsize && !p.sizes.includes(fsize)) return false;
-    if(fcolor && !p.colors.includes(fcolor)) return false;
-    if(min !== null && Number(p.price) < min) return false;
-    if(max !== null && Number(p.price) > max) return false;
-    if(ftag && !(p.tags || []).includes(ftag)) return false;
-    if(onlyAvail && !productAvailable(p)) return false;
-    return true;
-  });
-}
-
-// ---------- Events: product form ----------
-$('#product-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const reference = $('#p-reference').value.trim();
-  const name = $('#p-name').value.trim();
-  const description = $('#p-desc').value.trim();
-  const price = Number($('#p-price').value);
-  const active = $('#p-active').value === '1';
-  const sizes = ($('#p-sizes').value || '').split(',').map(s=>s.trim()).filter(Boolean);
-  const colors = ($('#p-colors').value || '').split(',').map(s=>s.trim()).filter(Boolean);
-  const stock = parseStockInput($('#p-stock').value);
-  const tags = ($('#p-tags').value || '').split(',').map(t=>t.trim()).filter(Boolean);
-
-  const images = uploadedImages.slice(); // from file reader (see below)
-
-  if(!reference || !name || !price){
-    alert('Referencia, nombre y precio son obligatorios.');
-    return;
-  }
-
-  const prod = {
-    id: uid(),
-    reference, name, description, price,
-    active, sizes, colors, stock,
-    images,
-    tags,
-    timesOrdered: 0
-  };
-
-  products.unshift(prod);
-  saveAll();
-  clearForm();
-  renderProducts();
-});
-
-// Clear form
-function clearForm(){
-  $('#p-reference').value = '';
-  $('#p-name').value = '';
-  $('#p-desc').value = '';
-  $('#p-price').value = '';
-  $('#p-active').value = '1';
-  $('#p-sizes').value = '';
-  $('#p-colors').value = '';
-  $('#p-stock').value = '';
-  $('#p-tags').value = '';
-  pImagesInput.value = '';
-  uploadedImages = [];
-  previewImagesEl.innerHTML = '';
-}
-$('#clear-form').addEventListener('click', clearForm);
-
-// ---------- Image uploads (base64 previews) ----------
-let uploadedImages = [];
-pImagesInput.addEventListener('change', (ev) => {
-  const files = Array.from(ev.target.files || []);
-  if(files.length===0) return;
-  Promise.all(files.map(f => fileToDataUrl(f))).then(arr => {
-    uploadedImages = uploadedImages.concat(arr);
-    previewImagesEl.innerHTML = uploadedImages.map(src => `<img src="${src}" />`).join('');
-  });
-});
-function fileToDataUrl(file){
-  return new Promise(res => {
-    const fr = new FileReader();
-    fr.onload = ()=>res(fr.result);
-    fr.readAsDataURL(file);
-  });
-}
-
-// ---------- Product actions (delegation) ----------
-productListEl.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('button');
-  if(!btn) return;
-  const action = btn.dataset.action;
-  const id = btn.dataset.id;
-  if(action === 'order') openOrderModal(id);
-  if(action === 'view') openViewModal(id);
-  if(action === 'fav') toggleFavorite(id);
-  if(action === 'toggle') toggleActive(id);
-});
-
-favoritesListEl.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('button');
-  if(!btn) return;
-  const id = btn.dataset.id;
-  toggleFavorite(id);
-});
-
-function toggleFavorite(id){
-  if(favorites.includes(id)) favorites = favorites.filter(x=>x!==id);
-  else favorites.unshift(id);
-  saveAll();
-  renderProducts();
-}
-
-function toggleActive(id){
-  products = products.map(p => p.id === id ? {...p, active: !p.active} : p);
-  saveAll();
-  renderProducts();
-}
-
-// ---------- Modal: view details ----------
-function openViewModal(id){
-  const p = products.find(x=>x.id===id);
-  if(!p) return;
-  const root = document.getElementById('modal-root');
-  root.innerHTML = `
-    <div class="modal-bg" id="view-modal">
-      <div class="modal">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <h3>${p.name}</h3>
-          <div><button id="close-view" class="btn sec">Cerrar</button></div>
-        </div>
-        <div class="grid-2" style="margin-top:12px">
-          <div>
-            <div style="display:flex;gap:8px">
-              <div style="width:220px;height:220px;border-radius:8px;overflow:hidden"><img src="${p.images[0]||''}" style="width:100%;height:100%;object-fit:cover" /></div>
-              <div style="flex:1">
-                <div class="small-muted">Ref: ${p.reference}</div>
-                <div style="font-weight:600;margin-top:4px">${p.name}</div>
-                <div style="font-weight:700;margin-top:6px">$ ${formatMoney(p.price)}</div>
-                <div style="margin-top:8px" class="small-muted">Disponibilidad: ${productAvailable(p)?'Disponible':'No disponible'}</div>
-
-                <div style="margin-top:12px">
-                  <label>Talla</label>
-                  <select id="view-size">${p.sizes.map(s=>`<option value="${s}">${s} (${p.colors.map(c=>`${c}:${p.stock[`${s}|${c}`]||0}`).join(' ')})</option>`).join('')}</select>
-                </div>
-                <div style="margin-top:8px">
-                  <label>Color</label>
-                  <select id="view-color">${p.colors.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-                </div>
-
-                <div style="margin-top:12px;display:flex;gap:8px">
-                  <button class="btn" id="view-order">Hacer pedido por WhatsApp</button>
-                </div>
-              </div>
-            </div>
-
-            <div style="margin-top:12px">
-              <div style="display:flex;gap:8px">${(p.images||[]).map(src=>`<img src="${src}" style="width:84px;height:84px;object-fit:cover;border-radius:8px">`).join('')}</div>
-            </div>
-          </div>
-
-          <div>
-            <div style="font-weight:700">Descripción</div>
-            <div class="small-muted" style="margin-top:6px">${p.description||''}</div>
-            <div style="margin-top:12px" class="tags">${(p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-            <div style="margin-top:12px" class="small-muted">Veces pedido: ${p.timesOrdered||0}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.getElementById('close-view').addEventListener('click', ()=>{ root.innerHTML=''; });
-  document.getElementById('view-order').addEventListener('click', ()=>{
-    root.innerHTML='';
-    openOrderModal(p.id, document.getElementById('view-size').value, document.getElementById('view-color').value);
-  });
-}
-
-// ---------- Order flow (modal form) ----------
-function openOrderModal(id, preSize, preColor){
-  const p = products.find(x=>x.id===id);
-  if(!p) return;
-  const root = document.getElementById('modal-root');
-  root.innerHTML = `
-    <div class="modal-bg" id="order-modal">
-      <div class="modal">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <h3>📦 Pedido VariedadesExpress</h3>
-          <button id="close-order" class="btn sec">Cancelar</button>
-        </div>
-        <div style="margin-top:8px" class="small-muted">🔖 Referencia: <strong>${p.reference}</strong></div>
-        <form id="order-form" style="margin-top:12px">
-          <input type="hidden" id="order-ref" value="${p.reference}" />
-          <div><label>Nombre completo *</label><input id="order-name" required type="text" /></div>
-          <div style="margin-top:8px"><label>Dirección *</label><input id="order-address" required type="text" /></div>
-          <div style="margin-top:8px"><label>Barrio *</label><input id="order-neigh" required type="text" /></div>
-          <div style="margin-top:8px"><label>Ciudad y departamento *</label><input id="order-city" required type="text" /></div>
-          <div style="margin-top:8px"><label>Teléfono *</label><input id="order-phone" required type="text" /></div>
-          <div style="margin-top:8px"><label>Teléfono adicional (opcional)</label><input id="order-phone2" type="text" /></div>
-
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <div style="flex:1">
-              <label>Talla *</label>
-              <select id="order-size">${p.sizes.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
-            </div>
-            <div style="width:140px">
-              <label>Color *</label>
-              <select id="order-color">${p.colors.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-            </div>
-          </div>
-
-          <div style="margin-top:8px">
-            <label>Método de entrega</label>
-            <select id="order-delivery"><option value="a domicilio">a domicilio</option><option value="reclamo en oficina">reclamo en oficina</option></select>
-          </div>
-
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-            <button type="button" id="order-cancel" class="btn sec">Cancelar</button>
-            <button class="btn" type="submit">Enviar pedido y abrir WhatsApp</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `;
-
-  // preselect if provided
-  if(preSize) $('#order-size').value = preSize;
-  if(preColor) $('#order-color').value = preColor;
-
-  document.getElementById('close-order').addEventListener('click', ()=>{ root.innerHTML=''; });
-  document.getElementById('order-cancel').addEventListener('click', ()=>{ root.innerHTML=''; });
-
-  document.getElementById('order-form').addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    // validate required
-    const name = $('#order-name').value.trim();
-    const address = $('#order-address').value.trim();
-    const neigh = $('#order-neigh').value.trim();
-    const city = $('#order-city').value.trim();
-    const phone = $('#order-phone').value.trim();
-    const phone2 = $('#order-phone2').value.trim();
-    const size = $('#order-size').value;
-    const color = $('#order-color').value;
-    const delivery = $('#order-delivery').value;
-
-    if(!name || !address || !neigh || !city || !phone || !size || !color){
-      alert('Por favor complete todos los campos obligatorios.');
-      return;
+    function inicializarFiltros(){
+      const tallas = new Set();
+      const colores = new Set();
+      productos.forEach(p=>{
+        p.tallas.forEach(t=>tallas.add(t));
+        p.colores.forEach(c=>colores.add(c));
+      });
+      tallas.forEach(t=>{
+        filtroTalla.innerHTML += `<option value="${t}">${t}</option>`;
+      });
+      colores.forEach(c=>{
+        filtroColor.innerHTML += `<option value="${c}">${c}</option>`;
+      });
     }
 
-    // check availability
-    if(!variantAvailable(p,size,color)){
-      alert('La talla/color seleccionado no está disponible.');
-      return;
+    function renderCatalogo(){
+      catalogo.innerHTML = '';
+      productos.filter(p=>{
+        if(filtroTalla.value && !p.tallas.includes(filtroTalla.value)) return false;
+        if(filtroColor.value && !p.colores.includes(filtroColor.value)) return false;
+        if(filtroPrecio.value && p.precio > parseInt(filtroPrecio.value)) return false;
+        return true;
+      }).forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'producto';
+        div.innerHTML = `
+          <img src="${p.fotos[0]}" alt="${p.nombre}">
+          <h3>${p.nombre}</h3>
+          <p>${p.descripcion}</p>
+          <p><strong>$${p.precio.toLocaleString()}</strong></p>
+          <p>🔥 ${p.pedidos} personas ya pidieron este producto</p>
+          <span class="favorito">❤</span>
+          <br>
+          <a href="#" class="btn" onclick="abrirFormulario('${p.ref}')">Hacer pedido</a>
+        `;
+        catalogo.appendChild(div);
+      });
     }
 
-    // decrement stock
-    const key = `${size}|${color}`;
-    products = products.map(prod => {
-      if(prod.id !== p.id) return prod;
-      const newStock = {...(prod.stock||{})};
-      newStock[key] = Math.max(0, (newStock[key] || 0) - 1);
-      return {...prod, stock: newStock, timesOrdered: (prod.timesOrdered||0) + 1};
+    function abrirFormulario(ref){
+      const producto = productos.find(p=>p.ref===ref);
+      document.getElementById('ref').value = producto.ref;
+      const tallaSelect = document.getElementById('talla');
+      const colorSelect = document.getElementById('color');
+      tallaSelect.innerHTML = '';
+      colorSelect.innerHTML = '';
+      producto.tallas.forEach(t=>{
+        tallaSelect.innerHTML += `<option value="${t}">${t}</option>`;
+      });
+      producto.colores.forEach(c=>{
+        colorSelect.innerHTML += `<option value="${c}">${c}</option>`;
+      });
+      document.getElementById('pedido-form').style.display = 'flex';
+    }
+
+    function cerrarFormulario(){
+      document.getElementById('pedido-form').style.display = 'none';
+    }
+
+    document.getElementById('formulario').addEventListener('submit', function(e){
+      e.preventDefault();
+      const ref = document.getElementById('ref').value;
+      const producto = productos.find(p=>p.ref===ref);
+      producto.pedidos++;
+      totalPedidos++;
+      contadorGlobal.innerText = totalPedidos;
+
+      const nombre = document.getElementById('nombre').value;
+      const direccion = document.getElementById('direccion').value;
+      const barrio = document.getElementById('barrio').value;
+      const ciudad = document.getElementById('ciudad').value;
+      const telefono = document.getElementById('telefono').value;
+      const telefono2 = document.getElementById('telefono2').value;
+      const talla = document.getElementById('talla').value;
+      const color = document.getElementById('color').value;
+      const metodo = document.getElementById('metodo').value;
+
+      const mensaje = `📦 Pedido VariedadesExpress%0A🔖 Referencia: ${ref}%0A👤 Nombre: ${nombre}%0A📍 Dirección: ${direccion}%0A🏘️ Barrio: ${barrio}%0A🏙️ Ciudad: ${ciudad}%0A📞 Teléfono: ${telefono}%0A📞 Teléfono adicional: ${telefono2}%0A👟 Talla: ${talla}%0A🎨 Color: ${color}%0A🚚 Método de entrega: ${metodo}`;
+
+      window.open(`https://wa.me/573216732606?text=${mensaje}`);
+      cerrarFormulario();
+      renderCatalogo();
+      document.getElementById('mensaje-confirmacion').style.display = 'block';
+      setTimeout(()=>{document.getElementById('mensaje-confirmacion').style.display='none'},4000);
     });
 
-    // increment global
-    globalOrders = (globalOrders || 0) + 1;
+    filtroTalla.addEventListener('change', renderCatalogo);
+    filtroColor.addEventListener('change', renderCatalogo);
+    filtroPrecio.addEventListener('input', renderCatalogo);
 
-    saveAll();
-    renderProducts();
-
-    // prepare whatsapp message
-    const waNumber = '+573216732606';
-    const baseMsg = encodeURIComponent(
-`📦 Pedido VariedadesExpress
-🔖 Referencia: ${p.reference}
-👤 Nombre completo: ${name}
-📍 Dirección: ${address}
-🏘️ Barrio: ${neigh}
-🏙️ Ciudad y departamento: ${city}
-📞 Teléfono: ${phone}${phone2 ? '\\n📞 Teléfono adicional: ' + phone2 : ''}
-👟 Talla: ${size}
-🎨 Color: ${color}
-🚚 Método de entrega: ${delivery}`
-    );
-    const waUrl = `https://wa.me/${waNumber.replace(/[^0-9]/g,'')}?text=${baseMsg}`;
-
-    // show confirmation toast
-    showToast();
-
-    // close modal
-    root.innerHTML = '';
-
-    // open WhatsApp in new tab
-    window.open(waUrl, '_blank');
-  });
-}
-
-// ---------- Toast ----------
-function showToast(){
-  toastEl.style.display = 'block';
-  setTimeout(()=>{ toastEl.style.display = 'none'; }, 6000);
-}
-
-// ---------- Initial render ----------
-function init(){
-  $('#nowtime').textContent = nowStr();
-  renderProducts();
-}
-init();
-
-// ---------- Periodic time updates and countdown ----------
-setInterval(()=>{ $('#nowtime').textContent = nowStr(); }, 1000);
-setInterval(()=>{ // countdown
-  const diff = Math.max(0, countdownEnd - Date.now());
-  const h = Math.floor(diff / (1000*60*60));
-  const m = Math.floor((diff % (1000*60*60)) / (1000*60));
-  const s = Math.floor((diff % (1000*60)) / 1000);
-  $('#countdown').textContent = `${h}h ${m}m ${s}s`;
-}, 1000);
-
-// ---------- Filters reactiveness ----------
-['input','change'].forEach(ev=>{
-  filterSearchEl.addEventListener(ev, renderProducts);
-  filterSizeEl.addEventListener(ev, renderProducts);
-  filterColorEl.addEventListener(ev, renderProducts);
-  filterMinEl.addEventListener(ev, renderProducts);
-  filterMaxEl.addEventListener(ev, renderProducts);
-  filterAvailableEl.addEventListener(ev, renderProducts);
-  filterTagEl.addEventListener(ev, renderProducts);
-});
-
-// ---------- Load initial saved data into UI ----------
-function preloadToForm(product){
-  // not used but kept for extension
-}
-
-// render initial favorites, reviews
-renderProducts();
-
-// ---------- Seed demo product if none exist (optional) ----------
-if(products.length === 0){
-  products.push({
-    id: uid(),
-    reference: 'REF-001',
-    name: 'Tenis Deportivo Demo',
-    description: 'Tenis cómodo, estilo urbano. Demo.',
-    price: 119900,
-    active: true,
-    sizes: ['38','39','40','41'],
-    colors: ['blanco','negro'],
-    stock: {'38|blanco':3,'39|blanco':2,'40|negro':1,'41|negro':0},
-    images: [],
-    tags: ['Nuevo'],
-    timesOrdered: 32
-  });
-  saveAll();
-  renderProducts();
-}
-</script>
+    inicializarFiltros();
+    renderCatalogo();
+  </script>
 </body>
 </html>
