@@ -1,292 +1,80 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VariedadesExpress - Catálogo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f7f7f7;
-    }
-    header {
-      background: #222;
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
-    }
-    .catalogo {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1rem;
-      padding: 1rem;
-    }
-    .producto {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .producto img {
-      width: 100%;
-      border-radius: 10px;
-    }
-    .producto h3 {
-      margin: 0.5rem 0;
-    }
-    .btn {
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      background: #28a745;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 0.5rem;
-    }
-    .btn:hover {
-      background: #218838;
-    }
-    .favorito {
-      cursor: pointer;
-      color: red;
-      font-size: 20px;
-    }
-    #pedido-form {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-    }
-    #pedido-form form {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 100%;
-    }
-    #pedido-form label {
-      display: block;
-      margin: 0.5rem 0 0.2rem;
-    }
-    #pedido-form input, #pedido-form select {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    #mensaje-confirmacion {
-      display: none;
-      text-align: center;
-      padding: 1rem;
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-      border-radius: 5px;
-      margin: 1rem;
-    }
-    .filtros {
-      padding: 1rem;
-      background: #fff;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-    }
-    .filtros select, .filtros input {
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>VariedadesExpress - Catálogo</h1>
-    <p>📦 Más de <span id="contador-global">0</span> pedidos realizados en total en VariedadesExpress.</p>
-  </header>
+<!doctype html>
+const colors = f.get('colors_template').split(',').map(c=>c.trim()).filter(Boolean);
+const tags = (f.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean);
+// build stock object with default stock 5 each
+const stock = {};
+sizes.forEach(s=>colors.forEach(c=>stock[`${s}_${c}`]=5));
+const p = { id: cryptoRandom(), reference, name:f.get('name'), description:f.get('description'), price, active:true, tags, images, variants:{sizes,colors,stock}, orders:0, reviews:[] };
+state.products.push(p); saveState(); renderProducts(); populateFilterOptions(); renderAdminList(); closeModal();
+});
+}
 
-  <div class="filtros">
-    <select id="filtro-talla">
-      <option value="">Filtrar por talla</option>
-    </select>
-    <select id="filtro-color">
-      <option value="">Filtrar por color</option>
-    </select>
-    <input type="number" id="filtro-precio" placeholder="Precio máximo">
-  </div>
 
-  <div id="mensaje-confirmacion">✅ Tu pedido fue enviado a VariedadesExpress, pronto nos comunicaremos contigo. Gracias por preferirnos.</div>
+function renderAdminList(){
+const el = document.getElementById('admin-list'); if(!el) return;
+el.innerHTML='';
+state.products.forEach(p=>{
+const div = document.createElement('div'); div.style.borderTop='1px solid #eee'; div.style.padding='8px 0';
+div.innerHTML = `<strong>${p.reference} - ${p.name}</strong> — ${p.active?'<em>Activo</em>':'<em>Inactivo</em>'} <div style="margin-top:6px"><button data-id="${p.id}" class="btn small-toggle">Activar/Desactivar</button> <button data-id="${p.id}" class="btn ghost small-edit">Editar</button></div>`;
+el.appendChild(div);
+});
+el.querySelectorAll('.small-toggle').forEach(btn=>btn.addEventListener('click',e=>{ const id=btn.dataset.id; const p=state.products.find(x=>x.id===id); p.active=!p.active; saveState(); renderAdminList(); renderProducts(); }));
+el.querySelectorAll('.small-edit').forEach(btn=>btn.addEventListener('click',e=>{ const id=btn.dataset.id; editProduct(id); }));
+}
 
-  <section class="catalogo" id="catalogo">
-    <!-- Productos generados dinámicamente -->
-  </section>
 
-  <!-- Formulario Pedido -->
-  <div id="pedido-form">
-    <form id="formulario">
-      <h2>📦 Pedido VariedadesExpress</h2>
-      <label>🔖 Referencia</label>
-      <input type="text" id="ref" readonly>
-      <label>👤 Nombre completo</label>
-      <input type="text" id="nombre" required>
-      <label>📍 Dirección</label>
-      <input type="text" id="direccion" required>
-      <label>🏘️ Barrio</label>
-      <input type="text" id="barrio" required>
-      <label>🏙️ Ciudad y departamento</label>
-      <input type="text" id="ciudad" required>
-      <label>📞 Teléfono</label>
-      <input type="text" id="telefono" required>
-      <label>📞 Teléfono adicional</label>
-      <input type="text" id="telefono2">
-      <label>👟 Talla</label>
-      <select id="talla" required></select>
-      <label>🎨 Color</label>
-      <select id="color" required></select>
-      <label>🚚 Método de entrega</label>
-      <select id="metodo">
-        <option value="Domicilio">A domicilio</option>
-        <option value="Oficina">Reclamo en oficina</option>
-      </select>
-      <button type="submit" class="btn">Enviar pedido</button>
-      <button type="button" class="btn" style="background:#dc3545" onclick="cerrarFormulario()">Cancelar</button>
-    </form>
-  </div>
+function editProduct(id){
+const p = state.products.find(x=>x.id===id); if(!p) return; // basic edit: toggle tags and price
+const html = `<h3>Editar producto ${p.reference}</h3>
+<form id="edit-form">
+<div class="row"><input name="name" value="${p.name}" required></div>
+<div class="row"><input name="price" type="number" value="${p.price}" required></div>
+<div class="row"><input name="tags" value="${(p.tags||[]).join(',')}"></div>
+<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" type="submit">Guardar</button><button class="btn ghost" id="cancel-edit" type="button">Cancelar</button></div>
+</form>`;
+openModal(html);
+document.getElementById('cancel-edit').addEventListener('click',closeModal);
+document.getElementById('edit-form').addEventListener('submit',ev=>{ ev.preventDefault(); const fd=new FormData(ev.target); p.name = fd.get('name'); p.price = parseInt(fd.get('price')); p.tags = (fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean); saveState(); closeModal(); renderProducts(); renderAdminList(); });
+}
 
-  <script>
-    const productos = [
-      {
-        ref: '101',
-        nombre: 'Tenis Adidas',
-        descripcion: 'Tenis deportivos originales',
-        precio: 199900,
-        stock: 10,
-        tallas: ['37','38','39','40'],
-        colores: ['Blanco','Negro'],
-        fotos: ['https://via.placeholder.com/250'],
-        pedidos: 0
-      },
-      {
-        ref: '102',
-        nombre: 'Tenis Nike',
-        descripcion: 'Tenis casuales modernos',
-        precio: 179900,
-        stock: 5,
-        tallas: ['38','39','41'],
-        colores: ['Rojo','Azul'],
-        fotos: ['https://via.placeholder.com/250'],
-        pedidos: 0
-      }
-    ];
 
-    const catalogo = document.getElementById('catalogo');
-    const contadorGlobal = document.getElementById('contador-global');
-    let totalPedidos = 0;
+// --- Reviews rendering ---
+function renderReviews(){ const el = document.getElementById('reviews'); el.innerHTML=''; state.products.slice(0,5).forEach(p=>{ (p.reviews||[]).forEach(r=>{ const d=document.createElement('div'); d.className='review'; d.innerHTML=`<strong>${r.name}</strong> — ${'★'.repeat(r.stars)}<div class="muted">${r.txt}</div>`; el.appendChild(d); }); }); }
 
-    const filtroTalla = document.getElementById('filtro-talla');
-    const filtroColor = document.getElementById('filtro-color');
-    const filtroPrecio = document.getElementById('filtro-precio');
 
-    function inicializarFiltros(){
-      const tallas = new Set();
-      const colores = new Set();
-      productos.forEach(p=>{
-        p.tallas.forEach(t=>tallas.add(t));
-        p.colores.forEach(c=>colores.add(c));
-      });
-      tallas.forEach(t=>{
-        filtroTalla.innerHTML += `<option value="${t}">${t}</option>`;
-      });
-      colores.forEach(c=>{
-        filtroColor.innerHTML += `<option value="${c}">${c}</option>`;
-      });
-    }
+// --- countdown timer example ---
+function startCountdown(){ const deadline = Date.now() + 1000*60*60*24; // 24h demo
+const el = document.getElementById('countdown'); const iv = setInterval(()=>{
+const diff = deadline - Date.now(); if(diff<=0){ el.textContent='Terminado'; clearInterval(iv); return; }
+const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
+el.textContent = `${h}h ${m}m ${s}s`;
+},500);
+}
 
-    function renderCatalogo(){
-      catalogo.innerHTML = '';
-      productos.filter(p=>{
-        if(filtroTalla.value && !p.tallas.includes(filtroTalla.value)) return false;
-        if(filtroColor.value && !p.colores.includes(filtroColor.value)) return false;
-        if(filtroPrecio.value && p.precio > parseInt(filtroPrecio.value)) return false;
-        return true;
-      }).forEach(p => {
-        const div = document.createElement('div');
-        div.className = 'producto';
-        div.innerHTML = `
-          <img src="${p.fotos[0]}" alt="${p.nombre}">
-          <h3>${p.nombre}</h3>
-          <p>${p.descripcion}</p>
-          <p><strong>$${p.precio.toLocaleString()}</strong></p>
-          <p>🔥 ${p.pedidos} personas ya pidieron este producto</p>
-          <span class="favorito">❤</span>
-          <br>
-          <a href="#" class="btn" onclick="abrirFormulario('${p.ref}')">Hacer pedido</a>
-        `;
-        catalogo.appendChild(div);
-      });
-    }
 
-    function abrirFormulario(ref){
-      const producto = productos.find(p=>p.ref===ref);
-      document.getElementById('ref').value = producto.ref;
-      const tallaSelect = document.getElementById('talla');
-      const colorSelect = document.getElementById('color');
-      tallaSelect.innerHTML = '';
-      colorSelect.innerHTML = '';
-      producto.tallas.forEach(t=>{
-        tallaSelect.innerHTML += `<option value="${t}">${t}</option>`;
-      });
-      producto.colores.forEach(c=>{
-        colorSelect.innerHTML += `<option value="${c}">${c}</option>`;
-      });
-      document.getElementById('pedido-form').style.display = 'flex';
-    }
+// --- global counter UI ---
+function updateGlobalCounter(){ document.getElementById('global-counter').textContent = `📦 Más de ${state.globalOrders||0} pedidos realizados en total en VariedadesExpress.`; }
 
-    function cerrarFormulario(){
-      document.getElementById('pedido-form').style.display = 'none';
-    }
 
-    document.getElementById('formulario').addEventListener('submit', function(e){
-      e.preventDefault();
-      const ref = document.getElementById('ref').value;
-      const producto = productos.find(p=>p.ref===ref);
-      producto.pedidos++;
-      totalPedidos++;
-      contadorGlobal.innerText = totalPedidos;
+// --- helper: render initial ---
+loadState(); seedIfEmpty(); populateFilterOptions(); renderProducts(); renderReviews(); startCountdown(); updateGlobalCounter();
 
-      const nombre = document.getElementById('nombre').value;
-      const direccion = document.getElementById('direccion').value;
-      const barrio = document.getElementById('barrio').value;
-      const ciudad = document.getElementById('ciudad').value;
-      const telefono = document.getElementById('telefono').value;
-      const telefono2 = document.getElementById('telefono2').value;
-      const talla = document.getElementById('talla').value;
-      const color = document.getElementById('color').value;
-      const metodo = document.getElementById('metodo').value;
 
-      const mensaje = `📦 Pedido VariedadesExpress%0A🔖 Referencia: ${ref}%0A👤 Nombre: ${nombre}%0A📍 Dirección: ${direccion}%0A🏘️ Barrio: ${barrio}%0A🏙️ Ciudad: ${ciudad}%0A📞 Teléfono: ${telefono}%0A📞 Teléfono adicional: ${telefono2}%0A👟 Talla: ${talla}%0A🎨 Color: ${color}%0A🚚 Método de entrega: ${metodo}`;
+// filters listeners
+document.getElementById('filter-size').addEventListener('change',renderProducts);
+document.getElementById('filter-color').addEventListener('change',renderProducts);
+document.getElementById('filter-price').addEventListener('input',renderProducts);
+document.getElementById('filter-availability').addEventListener('change',renderProducts);
+document.getElementById('search').addEventListener('input',renderProducts);
+document.getElementById('clear-filters').addEventListener('click',()=>{ document.getElementById('filter-size').value=''; document.getElementById('filter-color').value=''; document.getElementById('filter-price').value=''; document.getElementById('filter-availability').value=''; document.getElementById('search').value=''; renderProducts(); });
 
-      window.open(`https://wa.me/573216732606?text=${mensaje}`);
-      cerrarFormulario();
-      renderCatalogo();
-      document.getElementById('mensaje-confirmacion').style.display = 'block';
-      setTimeout(()=>{document.getElementById('mensaje-confirmacion').style.display='none'},4000);
-    });
 
-    filtroTalla.addEventListener('change', renderCatalogo);
-    filtroColor.addEventListener('change', renderCatalogo);
-    filtroPrecio.addEventListener('input', renderCatalogo);
+// small helpers
+function renderAdminListIfOpen(){ if(document.getElementById('admin-list')) renderAdminList(); }
 
-    inicializarFiltros();
-    renderCatalogo();
-  </script>
+
+// expose some functions to console for debugging
+window.ve = {state, saveState, renderProducts};
+</script>
 </body>
 </html>
