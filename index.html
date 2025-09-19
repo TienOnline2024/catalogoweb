@@ -1,80 +1,487 @@
 <!doctype html>
-const colors = f.get('colors_template').split(',').map(c=>c.trim()).filter(Boolean);
-const tags = (f.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean);
-// build stock object with default stock 5 each
-const stock = {};
-sizes.forEach(s=>colors.forEach(c=>stock[`${s}_${c}`]=5));
-const p = { id: cryptoRandom(), reference, name:f.get('name'), description:f.get('description'), price, active:true, tags, images, variants:{sizes,colors,stock}, orders:0, reviews:[] };
-state.products.push(p); saveState(); renderProducts(); populateFilterOptions(); renderAdminList(); closeModal();
-});
-}
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VariedadesExpress — Catálogo</title>
+  <style>
+    /* --- Reset & layout --- */
+    :root{--accent:#0d6efd;--muted:#666;--card:#fff;--bg:#f4f6f8}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial;background:var(--bg);margin:0;color:#111}
+    header{background:#fff;border-bottom:1px solid #e6e9ee;display:flex;align-items:center;justify-content:space-between;padding:14px 20px}
+    header h1{font-size:18px;margin:0}
+    .container{max-width:1100px;margin:20px auto;padding:0 16px}
+    .grid{display:grid;gap:16px}
 
+    /* --- Admin panel and filters --- */
+    .top{display:flex;gap:12px;align-items:center}
+    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    .panel{background:#fff;padding:14px;border-radius:10px;border:1px solid #e9eef5}
+    .flex{display:flex;gap:12px;align-items:center}
 
-function renderAdminList(){
-const el = document.getElementById('admin-list'); if(!el) return;
-el.innerHTML='';
-state.products.forEach(p=>{
-const div = document.createElement('div'); div.style.borderTop='1px solid #eee'; div.style.padding='8px 0';
-div.innerHTML = `<strong>${p.reference} - ${p.name}</strong> — ${p.active?'<em>Activo</em>':'<em>Inactivo</em>'} <div style="margin-top:6px"><button data-id="${p.id}" class="btn small-toggle">Activar/Desactivar</button> <button data-id="${p.id}" class="btn ghost small-edit">Editar</button></div>`;
-el.appendChild(div);
-});
-el.querySelectorAll('.small-toggle').forEach(btn=>btn.addEventListener('click',e=>{ const id=btn.dataset.id; const p=state.products.find(x=>x.id===id); p.active=!p.active; saveState(); renderAdminList(); renderProducts(); }));
-el.querySelectorAll('.small-edit').forEach(btn=>btn.addEventListener('click',e=>{ const id=btn.dataset.id; editProduct(id); }));
-}
+    /* --- product grid --- */
+    .products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);padding:12px;border-radius:10px;border:1px solid #e9eef5;position:relative}
+    .tags{position:absolute;top:10px;left:10px;display:flex;gap:6px}
+    .tag{background:#ffefdb;padding:4px 8px;border-radius:6px;font-size:12px}
+    .thumb{width:100%;height:180px;object-fit:cover;border-radius:8px}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    .price{font-weight:700}
+    .muted{color:var(--muted);font-size:13px}
 
+    /* --- modal --- */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal{background:#fff;padding:18px;border-radius:10px;max-width:820px;width:100%;max-height:92vh;overflow:auto}
 
-function editProduct(id){
-const p = state.products.find(x=>x.id===id); if(!p) return; // basic edit: toggle tags and price
-const html = `<h3>Editar producto ${p.reference}</h3>
-<form id="edit-form">
-<div class="row"><input name="name" value="${p.name}" required></div>
-<div class="row"><input name="price" type="number" value="${p.price}" required></div>
-<div class="row"><input name="tags" value="${(p.tags||[]).join(',')}"></div>
-<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" type="submit">Guardar</button><button class="btn ghost" id="cancel-edit" type="button">Cancelar</button></div>
-</form>`;
-openModal(html);
-document.getElementById('cancel-edit').addEventListener('click',closeModal);
-document.getElementById('edit-form').addEventListener('submit',ev=>{ ev.preventDefault(); const fd=new FormData(ev.target); p.name = fd.get('name'); p.price = parseInt(fd.get('price')); p.tags = (fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean); saveState(); closeModal(); renderProducts(); renderAdminList(); });
-}
+    /* --- product view --- */
+    .gallery{display:flex;gap:12px}
+    .gallery-main{flex:1}
+    .gallery-main img{width:100%;height:360px;object-fit:cover;border-radius:8px;transition:transform .15s}
+    .gallery-thumbs{display:flex;flex-direction:column;gap:8px;width:80px}
+    .gallery-thumbs img{width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:pointer}
 
+    /* --- form --- */
+    form .row{display:flex;gap:8px;margin-bottom:8px}
+    input,select,textarea{padding:8px;border-radius:8px;border:1px solid #d6dce6;width:100%}
 
-// --- Reviews rendering ---
-function renderReviews(){ const el = document.getElementById('reviews'); el.innerHTML=''; state.products.slice(0,5).forEach(p=>{ (p.reviews||[]).forEach(r=>{ const d=document.createElement('div'); d.className='review'; d.innerHTML=`<strong>${r.name}</strong> — ${'★'.repeat(r.stars)}<div class="muted">${r.txt}</div>`; el.appendChild(d); }); }); }
+    /* --- favorites & counters --- */
+    .fav{cursor:pointer;font-size:18px}
+    .small{font-size:13px;color:var(--muted)}
 
+    /* --- FAQ & reviews --- */
+    .faq-item{margin-bottom:8px}
+    .review{border-top:1px dashed #eee;padding:8px 0}
 
-// --- countdown timer example ---
-function startCountdown(){ const deadline = Date.now() + 1000*60*60*24; // 24h demo
-const el = document.getElementById('countdown'); const iv = setInterval(()=>{
-const diff = deadline - Date.now(); if(diff<=0){ el.textContent='Terminado'; clearInterval(iv); return; }
-const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
-el.textContent = `${h}h ${m}m ${s}s`;
-},500);
-}
+    /* --- responsive --- */
+    @media(max-width:760px){.gallery{flex-direction:column}.gallery-thumbs{flex-direction:row;width:auto;overflow:auto}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>VariedadesExpress — Catálogo</h1>
+    <div class="flex">
+      <div class="small" id="global-counter">📦 Más de 0 pedidos realizados en total</div>
+      <button class="btn" id="open-admin">Panel de subida</button>
+    </div>
+  </header>
 
+  <main class="container">
+    <section class="panel top" style="margin-bottom:12px">
+      <div>
+        <label class="small">Filtro por talla</label>
+        <select id="filter-size"><option value="">Todas</option></select>
+      </div>
+      <div>
+        <label class="small">Filtro por color</label>
+        <select id="filter-color"><option value="">Todos</option></select>
+      </div>
+      <div>
+        <label class="small">Rango precio</label>
+        <input id="filter-price" placeholder="max precio (ej 100000)" />
+      </div>
+      <div>
+        <label class="small">Disponibilidad</label>
+        <select id="filter-availability"><option value="">Todos</option><option value="available">Disponibles</option><option value="no">No disponibles</option></select>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <input id="search" placeholder="Buscar referencia o nombre" />
+        <button class="btn ghost" id="clear-filters">Limpiar</button>
+      </div>
+    </section>
 
-// --- global counter UI ---
-function updateGlobalCounter(){ document.getElementById('global-counter').textContent = `📦 Más de ${state.globalOrders||0} pedidos realizados en total en VariedadesExpress.`; }
+    <section class="grid">
+      <div class="panel">
+        <h3>Catálogo</h3>
+        <div class="products" id="products"></div>
+      </div>
 
+      <aside class="panel" style="min-width:260px">
+        <h3>Extras</h3>
+        <div>
+          <h4>Preguntas frecuentes</h4>
+          <div class="faq-item"><strong>¿Qué pagos aceptan?</strong><div class="muted">Efectivo, transferencia, Nequi y Daviplata (según disponibilidad).</div></div>
+          <div class="faq-item"><strong>Entregas</strong><div class="muted">Envíos a domicilio y recojo en oficina. Tiempo: 24-72 horas según ciudad.</div></div>
+          <div class="faq-item"><strong>Garantía</strong><div class="muted">Revisar condiciones: 15 días por defectos de fabricación.</div></div>
+        </div>
 
-// --- helper: render initial ---
-loadState(); seedIfEmpty(); populateFilterOptions(); renderProducts(); renderReviews(); startCountdown(); updateGlobalCounter();
+        <hr />
+        <div>
+          <h4>Reseñas</h4>
+          <div id="reviews"></div>
+        </div>
 
+        <hr />
+        <div>
+          <h4>Ofertas especiales</h4>
+          <div>Oferta: Descuento en algunos productos. <br/>Tiempo restante: <span id="countdown">—</span></div>
+        </div>
+      </aside>
+    </section>
+  </main>
 
-// filters listeners
-document.getElementById('filter-size').addEventListener('change',renderProducts);
-document.getElementById('filter-color').addEventListener('change',renderProducts);
-document.getElementById('filter-price').addEventListener('input',renderProducts);
-document.getElementById('filter-availability').addEventListener('change',renderProducts);
-document.getElementById('search').addEventListener('input',renderProducts);
-document.getElementById('clear-filters').addEventListener('click',()=>{ document.getElementById('filter-size').value=''; document.getElementById('filter-color').value=''; document.getElementById('filter-price').value=''; document.getElementById('filter-availability').value=''; document.getElementById('search').value=''; renderProducts(); });
+  <!-- Modales: admin, producto, order form, confirmation -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" id="modal">
+      <!-- dynamic content -->
+    </div>
+  </div>
 
+  <template id="product-template">
+    <div class="card">
+      <div class="tags"></div>
+      <img class="thumb" />
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div>
+          <div class="muted ref"></div>
+          <div class="title"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="price"></div>
+          <div class="small availability"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="small orders"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="fav" title="Guardar en favoritos">♡</div>
+          <button class="btn" data-action="view">Ver</button>
+        </div>
+      </div>
+    </div>
+  </template>
 
-// small helpers
-function renderAdminListIfOpen(){ if(document.getElementById('admin-list')) renderAdminList(); }
+  <script>
+  // --- Utilidades y almacenamiento local ---
+  const STORAGE_KEY = 've_catalog_v1';
+  let state = { products: [], favorites: [], globalOrders: 0 };
 
+  // cargar estado desde localStorage
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) state = JSON.parse(raw);
+    }catch(e){console.error('load',e)}
+  }
+  function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateGlobalCounter(); }
 
-// expose some functions to console for debugging
-window.ve = {state, saveState, renderProducts};
-</script>
+  // valores iniciales de ejemplo si no hay productos
+  function seedIfEmpty(){
+    if(state.products.length) return;
+    state.products = [
+      {
+        id: cryptoRandom(), reference:'801', name:'Tenis Deportivo', description:'Tenis cómodo para uso diario', price:169900, active:true, tags:['Nuevo'], images:[],
+        variants:{sizes:['36','37','38','39','40'],colors:['Blanco','Negro'], stock:{'36_Blanco':5,'37_Blanco':2,'38_Blanco':0,'39_Blanco':1,'40_Blanco':4,'36_Negro':3,'37_Negro':0,'38_Negro':2,'39_Negro':1,'40_Negro':2}},
+        orders:32, reviews:[{name:'Ana',stars:5,txt:'Excelente servicio!'}]
+      },
+      {
+        id: cryptoRandom(), reference:'802', name:'Zapatillas Casual', description:'Estilo urbano', price:110900, active:true, tags:['Oferta'], images:[],
+        variants:{sizes:['35','36','37','38'],colors:['Rosa','Blanco'], stock:{'35_Rosa':1,'36_Rosa':0,'37_Rosa':2,'38_Rosa':0,'35_Blanco':4,'36_Blanco':2,'37_Blanco':3,'38_Blanco':1}},
+        orders:15, reviews:[]
+      }
+    ];
+    state.globalOrders = 120;
+    saveState();
+  }
+
+  function cryptoRandom(){ return Math.random().toString(36).slice(2,9); }
+
+  // --- Renderizado productos ---
+  const productsEl = document.getElementById('products');
+  function renderProducts(){
+    productsEl.innerHTML='';
+    const tpl = document.getElementById('product-template');
+    const filters = readFilters();
+    const q = document.getElementById('search').value.trim().toLowerCase();
+
+    state.products.forEach(p=>{
+      if(!p.active) return; // no mostrar inactivos en catálogo
+      if(q && !(p.name.toLowerCase().includes(q) || p.reference.toLowerCase().includes(q))) return;
+      // filtro talla
+      if(filters.size){ if(!p.variants.sizes.includes(filters.size)) return; }
+      // filtro color
+      if(filters.color){ if(!p.variants.colors.includes(filters.color)) return; }
+      // precio max
+      if(filters.price){ if(p.price>filters.price) return; }
+      // availability
+      if(filters.availability){
+        const available = productHasAnyStock(p);
+        if(filters.availability==='available' && !available) return;
+        if(filters.availability==='no' && available) return;
+      }
+
+      const node = tpl.content.cloneNode(true);
+      node.querySelector('.thumb').src = p.images[0] || placeholder(p.name);
+      node.querySelector('.title').textContent = p.name;
+      node.querySelector('.ref').textContent = `Ref: ${p.reference}`;
+      node.querySelector('.price').textContent = formatCOP(p.price);
+      node.querySelector('.availability').textContent = productHasAnyStock(p)?'Disponible':'No disponible';
+      const tagsEl = node.querySelector('.tags'); p.tags?.forEach(t=>{ const span = document.createElement('div'); span.className='tag'; span.textContent=t; tagsEl.appendChild(span); });
+      node.querySelector('.orders').textContent = `🔥 ${p.orders || 0} personas ya pidieron este producto en VariedadesExpress.`
+      const favBtn = node.querySelector('.fav'); favBtn.textContent = state.favorites.includes(p.id)?'♥':'♡';
+      favBtn.onclick = ()=>{ toggleFav(p.id); favBtn.textContent = state.favorites.includes(p.id)?'♥':'♡'; saveState(); };
+      node.querySelector('[data-action="view"]').onclick = ()=>openProductModal(p.id);
+      productsEl.appendChild(node);
+    });
+  }
+
+  function placeholder(name){ return 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect fill="#eef2f6" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9aa6b2" font-size="20">${name}</text></svg>`);
+  }
+
+  function formatCOP(n){ return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n); }
+
+  function productHasAnyStock(p){
+    for(const key in p.variants.stock) if(p.variants.stock[key]>0) return true; return false;
+  }
+
+  // --- filtros dinámicos ---
+  function populateFilterOptions(){
+    const sizes = new Set(); const colors = new Set();
+    state.products.forEach(p=>{p.variants.sizes.forEach(s=>sizes.add(s)); p.variants.colors.forEach(c=>colors.add(c));});
+    const sizeSel = document.getElementById('filter-size'); sizeSel.innerHTML='<option value="">Todas</option>';
+    Array.from(sizes).sort().forEach(s=>{ const o=document.createElement('option');o.value=s;o.textContent=s;sizeSel.appendChild(o); });
+    const colorSel = document.getElementById('filter-color'); colorSel.innerHTML='<option value="">Todos</option>';
+    Array.from(colors).sort().forEach(c=>{ const o=document.createElement('option');o.value=c;o.textContent=c;colorSel.appendChild(o); });
+  }
+
+  function readFilters(){
+    const size=document.getElementById('filter-size').value;
+    const color=document.getElementById('filter-color').value;
+    const priceVal = document.getElementById('filter-price').value.trim();
+    const price = priceVal?parseInt(priceVal):null;
+    const availability = document.getElementById('filter-availability').value;
+    return {size,color,price,availability};
+  }
+
+  // --- modal control ---
+  const backdrop = document.getElementById('modal-backdrop'); const modal = document.getElementById('modal');
+  function openModal(html){ modal.innerHTML = html; backdrop.style.display='flex'; }
+  function closeModal(){ backdrop.style.display='none'; }
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
+
+  // --- product modal / view ---
+  function openProductModal(productId){
+    const p = state.products.find(x=>x.id===productId); if(!p) return;
+    const imagesHtml = (p.images && p.images.length)?p.images.map((src,idx)=>`<img src="${src}" data-idx="${idx}" class="thumb-small" style="width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:pointer;">`).join('') : '';
+    const sizesOptions = p.variants.sizes.map(s=>`<option value="${s}">${s}${availableFor(p,s,null)?'':' (agotado)'}</option>`).join('');
+    const colorsOptions = p.variants.colors.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+    const html = `
+      <div style="display:flex;gap:12px">
+        <div class="gallery">
+          <div class="gallery-main"><img id="main-img" src="${p.images[0]||placeholder(p.name)}" alt=""></div>
+          <div class="gallery-thumbs">${imagesHtml}</div>
+        </div>
+        <div style="flex:1">
+          <h2>${p.name}</h2>
+          <div class="muted">Ref: ${p.reference}</div>
+          <div style="margin-top:8px;font-weight:700">${formatCOP(p.price)}</div>
+          <div class="muted">${productHasAnyStock(p)?'Disponible':'No disponible'}</div>
+          <p style="margin-top:8px">${p.description}</p>
+          <div style="margin-top:8px">
+            <label>Talla</label>
+            <select id="sel-size">${sizesOptions}</select>
+          </div>
+          <div style="margin-top:8px">
+            <label>Color</label>
+            <select id="sel-color">${colorsOptions}</select>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn" id="btn-order">Hacer pedido por WhatsApp</button>
+            <button class="btn ghost" id="btn-close">Cerrar</button>
+          </div>
+          <div style="margin-top:10px" class="small">${p.orders || 0} pedidos</div>
+        </div>
+      </div>
+    `;
+
+    openModal(html);
+    // gallery thumbs click to change main
+    document.querySelectorAll('.thumb-small').forEach(img=>img.addEventListener('click',e=>{ document.getElementById('main-img').src = e.target.src; }));
+    // zoom on main image click: open simple modal with large image
+    document.getElementById('main-img').addEventListener('click',()=>{
+      openModal(`<div style="text-align:center"><img src="${document.getElementById('main-img').src}" style="max-width:100%;max-height:80vh"/></div>`);
+    });
+    document.getElementById('btn-close').addEventListener('click',closeModal);
+    document.getElementById('btn-order').addEventListener('click',()=>openOrderForm(p.id));
+  }
+
+  function availableFor(p,size,color){
+    // if color null -> any color with that size
+    if(color){ const key = `${size}_${color}`; return (p.variants.stock[key]||0) > 0; }
+    for(const c of p.variants.colors) if((p.variants.stock[`${size}_${c}`]||0)>0) return true; return false;
+  }
+
+  // --- order form & WhatsApp integration ---
+  const WHATSAPP = '+573216732606';
+  function openOrderForm(productId){
+    const p = state.products.find(x=>x.id===productId); if(!p) return;
+    // build select options with availability disabled if stock 0
+    const sizeOptions = p.variants.sizes.map(s=>{
+      const disabled = !availableFor(p,s,null) ? 'disabled' : '';
+      return `<option value="${s}" ${disabled}>${s}${disabled?' (agotado)':''}</option>`;
+    }).join('');
+    const colorOptions = p.variants.colors.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+    const html = `
+      <h3>📦 Pedido VariedadesExpress</h3>
+      <div class="muted">🔖 Referencia: <strong>${p.reference}</strong></div>
+      <form id="order-form">
+        <div class="row"><input name="fullname" placeholder="Nombre completo" required></div>
+        <div class="row"><input name="address" placeholder="Dirección" required></div>
+        <div class="row"><input name="neighborhood" placeholder="Barrio" required></div>
+        <div class="row"><input name="city" placeholder="Ciudad y departamento" required></div>
+        <div class="row"><input name="phone" placeholder="Teléfono" required></div>
+        <div class="row"><input name="phone2" placeholder="Teléfono adicional (opcional)"></div>
+        <div class="row"><label>Talla</label><select name="size" required>${sizeOptions}</select></div>
+        <div class="row"><label>Color</label><select name="color" required>${colorOptions}</select></div>
+        <div class="row"><label>Método de entrega</label><select name="delivery" required><option value="domicilio">A domicilio</option><option value="sucursal">Reclamo en oficina</option></select></div>
+        <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" type="submit">Enviar pedido</button><button class="btn ghost" type="button" id="cancel-order">Cancelar</button></div>
+      </form>
+    `;
+
+    openModal(html);
+    document.getElementById('cancel-order').addEventListener('click',closeModal);
+    document.getElementById('order-form').addEventListener('submit',function(ev){
+      ev.preventDefault();
+      const form = new FormData(ev.target);
+      const payload = Object.fromEntries(form.entries());
+      // check inventory before sending
+      if(!(p.variants.stock[`${payload.size}_${payload.color}`] > 0)){
+        alert('La combinación talla-color seleccionada no está disponible.'); return;
+      }
+      // decrement stock
+      p.variants.stock[`${payload.size}_${payload.color}`] -= 1;
+      p.orders = (p.orders || 0) + 1;
+      state.globalOrders = (state.globalOrders || 0) + 1;
+      saveState();
+
+      // build WhatsApp message
+      const msg = `📦 Pedido VariedadesExpress%0A🔖 Referencia: ${p.reference}%0A👤 Nombre completo: ${encodeURIComponent(payload.fullname)}%0A📍 Dirección: ${encodeURIComponent(payload.address)}%0A🏘️ Barrio: ${encodeURIComponent(payload.neighborhood)}%0A🏙️ Ciudad y departamento: ${encodeURIComponent(payload.city)}%0A📞 Teléfono: ${encodeURIComponent(payload.phone)}%0A📞 Teléfono adicional: ${encodeURIComponent(payload.phone2||'-')}%0A👟 Talla: ${payload.size}%0A🎨 Color: ${payload.color}%0A🚚 Método de entrega: ${payload.delivery}`;
+
+      // show confirmation
+      closeModal();
+      setTimeout(()=>{
+        alert('✅ Tu pedido fue enviado a VariedadesExpress, pronto nos comunicaremos contigo. Gracias por preferirnos.');
+        updateUIAfterOrder();
+        // open WhatsApp in new tab with message
+        const url = `https://wa.me/${WHATSAPP.replace('+','')}?text=${msg}`;
+        window.open(url,'_blank');
+      },50);
+    });
+  }
+
+  function updateUIAfterOrder(){ renderProducts(); renderReviews(); updateGlobalCounter(); }
+
+  // --- favorites ---
+  function toggleFav(id){ const i = state.favorites.indexOf(id); if(i>-1) state.favorites.splice(i,1); else state.favorites.push(id); saveState(); }
+
+  // --- admin panel (subida manual) ---
+  document.getElementById('open-admin').addEventListener('click',openAdmin);
+  function openAdmin(){
+    const html = `
+      <h3>Panel de subida - VariedadesExpress</h3>
+      <form id="admin-form">
+        <div class="row"><input name="reference" placeholder="Número de referencia (ej 901)" required></div>
+        <div class="row"><input name="name" placeholder="Nombre" required></div>
+        <div class="row"><textarea name="description" placeholder="Descripción" required></textarea></div>
+        <div class="row"><input name="price" placeholder="Precio" type="number" required></div>
+        <div class="row"><input name="stock_template" placeholder="Tallas (coma)" required></div>
+        <div class="row"><input name="colors_template" placeholder="Colores (coma)" required></div>
+        <div class="row"><label>Etiquetas</label><br/><input name="tags" placeholder="Separadas por comas (Nuevo,Oferta,Últimas unidades)"></div>
+        <div class="row"><label>Fotos (puedes subir varias)</label><input type="file" id="images-input" accept="image/*" multiple></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" type="submit">Crear producto</button><button class="btn ghost" id="close-admin" type="button">Cerrar</button></div>
+      </form>
+      <hr/>
+      <h4>Productos existentes</h4>
+      <div id="admin-list"></div>
+    `;
+    openModal(html);
+    document.getElementById('close-admin').addEventListener('click',closeModal);
+    document.getElementById('admin-form').addEventListener('submit',handleCreateProduct);
+    renderAdminList();
+  }
+
+  function handleCreateProduct(ev){
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const reference = f.get('reference');
+    // read images as base64 then create product
+    const files = document.getElementById('images-input').files;
+    const readFiles = [];
+    const readerPromises = [];
+    for(let i=0;i<files.length;i++){ const file=files[i]; readerPromises.push(new Promise(res=>{ const r=new FileReader(); r.onload = ()=>res(r.result); r.readAsDataURL(file); })); }
+    Promise.all(readerPromises).then(images=>{
+      const price = parseInt(f.get('price'));
+      const sizes = f.get('stock_template').split(',').map(s=>s.trim()).filter(Boolean);
+      const colors = f.get('colors_template').split(',').map(c=>c.trim()).filter(Boolean);
+      const tags = (f.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean);
+      // build stock object with default stock 5 each
+      const stock = {};
+      sizes.forEach(s=>colors.forEach(c=>stock[`${s}_${c}`]=5));
+      const p = { id: cryptoRandom(), reference, name:f.get('name'), description:f.get('description'), price, active:true, tags, images, variants:{sizes,colors,stock}, orders:0, reviews:[] };
+      state.products.push(p); saveState(); renderProducts(); populateFilterOptions(); renderAdminList(); closeModal();
+    });
+  }
+
+  function renderAdminList(){
+    const el = document.getElementById('admin-list'); if(!el) return;
+    el.innerHTML='';
+    state.products.forEach(p=>{
+      const div = document.createElement('div'); div.style.borderTop='1px solid #eee'; div.style.padding='8px 0';
+      div.innerHTML = `<strong>${p.reference} - ${p.name}</strong> — ${p.active?'<em>Activo</em>':'<em>Inactivo</em>'} <div style="margin-top:6px"><button data-id="${p.id}" class="btn small-toggle">Activar/Desactivar</button> <button data-id="${p.id}" class="btn ghost small-edit">Editar</button></div>`;
+      el.appendChild(div);
+    });
+    el.querySelectorAll('.small-toggle').forEach(btn=>btn.addEventListener('click',e=>{ const id=btn.dataset.id; const p=state.products.find(x=>x.id===id); p.active=!p.active; saveState(); renderAdminList(); renderProducts(); }));
+    el.querySelectorAll('.small-edit').forEach(btn=>btn.addEventListener('click',e=>{ const id=btn.dataset.id; editProduct(id); }));
+  }
+
+  function editProduct(id){
+    const p = state.products.find(x=>x.id===id); if(!p) return; // basic edit: toggle tags and price
+    const html = `<h3>Editar producto ${p.reference}</h3>
+      <form id="edit-form">
+        <div class="row"><input name="name" value="${p.name}" required></div>
+        <div class="row"><input name="price" type="number" value="${p.price}" required></div>
+        <div class="row"><input name="tags" value="${(p.tags||[]).join(',')}"></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" type="submit">Guardar</button><button class="btn ghost" id="cancel-edit" type="button">Cancelar</button></div>
+      </form>`;
+    openModal(html);
+    document.getElementById('cancel-edit').addEventListener('click',closeModal);
+    document.getElementById('edit-form').addEventListener('submit',ev=>{ ev.preventDefault(); const fd=new FormData(ev.target); p.name = fd.get('name'); p.price = parseInt(fd.get('price')); p.tags = (fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean); saveState(); closeModal(); renderProducts(); renderAdminList(); });
+  }
+
+  // --- Reviews rendering ---
+  function renderReviews(){ const el = document.getElementById('reviews'); el.innerHTML=''; state.products.slice(0,5).forEach(p=>{ (p.reviews||[]).forEach(r=>{ const d=document.createElement('div'); d.className='review'; d.innerHTML=`<strong>${r.name}</strong> — ${'★'.repeat(r.stars)}<div class="muted">${r.txt}</div>`; el.appendChild(d); }); }); }
+
+  // --- countdown timer example ---
+  function startCountdown(){ const deadline = Date.now() + 1000*60*60*24; // 24h demo
+    const el = document.getElementById('countdown'); const iv = setInterval(()=>{
+      const diff = deadline - Date.now(); if(diff<=0){ el.textContent='Terminado'; clearInterval(iv); return; }
+      const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
+      el.textContent = `${h}h ${m}m ${s}s`;
+    },500);
+  }
+
+  // --- global counter UI ---
+  function updateGlobalCounter(){ document.getElementById('global-counter').textContent = `📦 Más de ${state.globalOrders||0} pedidos realizados en total en VariedadesExpress.`; }
+
+  // --- helper: render initial ---
+  loadState(); seedIfEmpty(); populateFilterOptions(); renderProducts(); renderReviews(); startCountdown(); updateGlobalCounter();
+
+  // filters listeners
+  document.getElementById('filter-size').addEventListener('change',renderProducts);
+  document.getElementById('filter-color').addEventListener('change',renderProducts);
+  document.getElementById('filter-price').addEventListener('input',renderProducts);
+  document.getElementById('filter-availability').addEventListener('change',renderProducts);
+  document.getElementById('search').addEventListener('input',renderProducts);
+  document.getElementById('clear-filters').addEventListener('click',()=>{ document.getElementById('filter-size').value=''; document.getElementById('filter-color').value=''; document.getElementById('filter-price').value=''; document.getElementById('filter-availability').value=''; document.getElementById('search').value=''; renderProducts(); });
+
+  // small helpers
+  function renderAdminListIfOpen(){ if(document.getElementById('admin-list')) renderAdminList(); }
+
+  // expose some functions to console for debugging
+  window.ve = {state, saveState, renderProducts};
+  </script>
 </body>
 </html>
